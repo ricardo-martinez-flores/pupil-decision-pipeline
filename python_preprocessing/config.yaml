@@ -1,0 +1,103 @@
+# =====================================================================
+# Configuration for pupil_pipeline.py
+# Edit this file to match YOUR recording setup and data file.
+# Any key left out falls back to the default in pupil_pipeline.py.
+# =====================================================================
+
+input_csv: data/example_data.csv     # long-format CSV, one row per sample
+output_dir: outputs                  # created if it does not exist
+
+# --- Column names in your file (right side) -------------------------
+columns:
+  participant: participant
+  trial: trial                       # unique within participant
+  condition: condition
+  time: time                         # time from stimulus onset (negative = baseline)
+  left_pupil: left_pupil             # pupil diameter, mm recommended
+  right_pupil: right_pupil
+  left_valid: left_valid             # optional (null if absent)
+  right_valid: right_valid           # optional
+  gaze_x: gaze_x                     # optional, normalized 0-1 (0 = left edge)
+  gaze_y: gaze_y                     # optional, normalized 0-1 (0 = top edge)
+
+validity:
+  valid_values: [0]                  # codes meaning "valid" (Tobii-style: 0). Use [1] or [true] for boolean flags
+
+conditions:
+  of_interest: Target                # condition whose response is the benchmark
+  reference: Distractor
+
+recording:
+  sampling_rate_hz: 60
+  time_unit_to_ms: 1.0               # 0.001 if time is in microseconds, 1000 if in seconds
+  baseline_window_ms: 200            # last N ms before onset
+  response_window_ms: 2000
+
+screen:                              # only for the gaze check (STEP 5); leave null to skip
+  width_cm: 34.0
+  height_cm: 19.0
+  viewing_distance_cm: 60.0
+
+# --- STEP 1: data validity ------------------------------------------
+pupil_range:
+  min_mm: 1.5                        # applied floor
+  max_mm: 8.0
+  literature_min_mm: 2.0             # conventional floor, tested as the alternative
+  band_width_mm: 0.5
+
+coverage:
+  min_valid_pct: 50                  # applied: >= 50% valid samples in the better eye
+  literature_missing_pct: [20, 30, 40, 50]
+  extended_missing_pct: [10, 60, 70, 80]
+
+interocular:
+  ratio_threshold: 0.30
+  reference_pct_flagged: 5.0
+  stable_slope_pp_per_0.1: 1.0
+
+gap:
+  max_gap_ms: 500
+  literature_default_ms: 500
+  elbow_step_ms: 10
+  elbow_flat_drop_pp: 0.5
+  elbow_sustained_steps: 10
+
+boundary_edge:
+  enabled: true
+  window_samples: 1                  # scale with sampling rate (1 sample = 16.7 ms at 60 Hz)
+
+# --- STEP 2: interpolation ------------------------------------------
+interpolation:
+  method: linear                     # linear | cubic
+  cubic_anchor_points: 2
+  longer_gap_ms: 100
+  n_synthetic_gaps: 3000
+  synthetic_margin_ms: 150
+
+# --- STEP 3: baseline -----------------------------------------------
+baseline:
+  summary: mean                      # mean | median
+  z_threshold: 2.0                   # |z| on mean/SD within participant
+  mad_threshold: 2.5                 # |robust z| on median / (1.4826 * MAD)
+
+# --- STEP 4: smoothing ----------------------------------------------
+smoothing:
+  method: gaussian                   # gaussian | moving_average | savgol | butterworth | none
+  params: {sigma: 2}
+  alternatives:
+    - {label: NS,   method: none,           params: {}}
+    - {label: MV,   method: moving_average, params: {window: 5}}
+    - {label: SG,   method: savgol,         params: {window: 7, polyorder: 3}}
+    - {label: BL-P, method: butterworth,    params: {cutoff_hz: 4.0, order: 4}}
+
+# --- Participant-level sensitivity analysis -------------------------
+analysis:
+  sensitivity_window_ms: [1000, 1500]  # fixed a priori, independent of the tested contrast
+  n_bootstrap: 5000                    # BCa bootstrap resamples
+  n_permutations: 5000                 # sign-flip permutations
+  seed: 12345
+  min_trials_per_cell: 2
+
+steps:
+  gaze_confound: true
+  save_figures: true
