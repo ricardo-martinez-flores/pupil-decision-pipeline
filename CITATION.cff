@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the accompanying article."
+title: "Decision-by-decision pupillometry preprocessing and analysis pipeline"
+type: software
+license: MIT
+authors:
+  - family-names: "Martínez-Flores"
+    given-names: "Ricardo"
+    orcid: "https://orcid.org/0000-0002-8435-2710"
+keywords:
+  - pupillometry
+  - eye tracking
+  - preprocessing
+  - mixed-effects models
+  - mild cognitive impairment
