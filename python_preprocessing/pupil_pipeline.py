@@ -93,6 +93,11 @@ DEFAULT_CONFIG = {
         "right_valid": "right_valid",
         "gaze_x": "gaze_x",                # optional: horizontal gaze, normalized 0-1 (0 = left)
         "gaze_y": "gaze_y",                # optional: vertical gaze, normalized 0-1 (0 = top)
+        # Alternative to gaze_x/gaze_y: per-eye gaze columns (normalized 0-1),
+        # averaged over the eyes with on-screen values.
+        "left_gaze_x": None, "left_gaze_y": None, "right_gaze_x": None, "right_gaze_y": None,
+        # Optional epoch label column (e.g. "baseline" / "stimulus"); see recording.onset_epoch.
+        "epoch": None,
     },
 
     # Values of the validity columns that mean "valid sample"
@@ -107,6 +112,10 @@ DEFAULT_CONFIG = {
         "time_unit_to_ms": 1.0,            # multiply the time column by this to get ms
         "baseline_window_ms": 200.0,       # last N ms before stimulus onset
         "response_window_ms": 2000.0,      # analysis window after stimulus onset
+        # If the time column is an absolute timestamp, name the epoch label that
+        # marks the stimulus: time is then re-zeroed within each trial at the
+        # first sample of that epoch (requires columns.epoch).
+        "onset_epoch": None,
     },
 
     # Needed only for the gaze-position check (STEP 5).
@@ -424,12 +433,34 @@ def load_raw_trials(cfg):
         sys.exit(f"Input file not found: {cfg['input_csv']} (set 'input_csv' in the config; "
                  "run make_example_data.py to create the example dataset).")
     df = pd.read_csv(cfg["input_csv"], low_memory=False)
+    rec = cfg["recording"]
+    # absolute timestamps + epoch labels -> time relative to stimulus onset
+    if rec.get("onset_epoch"):
+        ep = c.get("epoch")
+        if not ep or ep not in df.columns:
+            sys.exit("recording.onset_epoch is set but columns.epoch is missing from the data.")
+        df["_time"] = pd.to_numeric(df[c["time"]], errors="coerce")
+        is_onset = df[ep].astype(str).str.strip() == str(rec["onset_epoch"])
+        onset = df[is_onset].groupby([c["participant"], c["trial"]])["_time"].min().rename("_onset")
+        df = df.join(onset, on=[c["participant"], c["trial"]])
+        df = df[df["_onset"].notna()].copy()
+        df["_time_rel"] = df["_time"] - df["_onset"]
+        c = dict(c, time="_time_rel")
+    # per-eye gaze -> single gaze position (mean of on-screen eyes; off-screen if none)
+    eye_gaze = [c.get(k) for k in ("left_gaze_x", "left_gaze_y", "right_gaze_x", "right_gaze_y")]
+    if not (c.get("gaze_x") and c["gaze_x"] in df.columns) and all(k and k in df.columns for k in eye_gaze):
+        def on(col):
+            v = pd.to_numeric(df[col], errors="coerce")
+            return v.where((v >= 0) & (v <= 1))
+        for axis, (lc, rc) in (("x", eye_gaze[0::2]), ("y", eye_gaze[1::2])):
+            m = pd.concat([on(lc), on(rc)], axis=1).mean(axis=1)
+            df[f"_gaze_{axis}"] = m.fillna(-1.0)
+        c = dict(c, gaze_x="_gaze_x", gaze_y="_gaze_y")
     required = ["participant", "trial", "condition", "time", "left_pupil", "right_pupil"]
     missing = [k for k in required if not c.get(k) or c[k] not in df.columns]
     if missing:
         sys.exit(f"Missing required columns (check 'columns' in the config): {missing}")
 
-    rec = cfg["recording"]
     base_ms, resp_ms = rec["baseline_window_ms"], rec["response_window_ms"]
     valid_values = cfg["validity"]["valid_values"]
 

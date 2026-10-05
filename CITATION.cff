@@ -13,3 +13,10 @@ keywords:
   - preprocessing
   - mixed-effects models
   - mild cognitive impairment
+references:
+  - type: data
+    title: "Anonymized pupillometry data from older adults with mild cognitive impairment during a visual oddball task (33 Hz)"
+    doi: "10.5281/zenodo.23160276"
+    authors:
+      - family-names: "Martínez-Flores"
+        given-names: "Ricardo"

@@ -57,6 +57,8 @@ The input is a single CSV in long format, with **one row per sample**:
 | `left_pupil`, `right_pupil` | yes | Pupil diameter per eye. Use mm; the range criteria are in mm. |
 | `left_valid`, `right_valid` | no | Tracker validity code per eye |
 | `gaze_x`, `gaze_y` | no | Gaze position normalized to 0–1 (0 = left/top). Used for the off-screen check and STEP 5. |
+| `left_gaze_x`, `left_gaze_y`, `right_gaze_x`, `right_gaze_y` | no | Per-eye gaze instead of `gaze_x`/`gaze_y`; averaged over the eyes with on-screen values. |
+| `epoch` | no | Epoch label (e.g. baseline / stimulus); used with `recording.onset_epoch`. |
 
 **Using your own column names.** You do not need to rename your columns. Map
 them in the `columns:` block of `config.yaml`. Set optional columns to `null`
@@ -66,13 +68,23 @@ if your file does not have them.
 For example, `[0]` for Tobii-style codes, or `[1]` or `[true]` for boolean
 flags.
 
-**Timestamps.** If your timestamps are absolute (not relative to onset), first
-subtract the stimulus-onset time within each trial. Then set
-`recording.time_unit_to_ms` for your units: `0.001` for µs, `1000` for s.
+**Timestamps.** Set `recording.time_unit_to_ms` for your units: `0.001` for µs,
+`1000` for s. If your timestamps are absolute rather than relative to onset, you
+have two options:
+- subtract the stimulus-onset time within each trial yourself; or
+- if your file has an epoch label column, map it in `columns.epoch` and set
+  `recording.onset_epoch` to the label of the stimulus epoch. The pipeline then
+  re-zeroes time within each trial at the first sample of that epoch, so the
+  preceding epoch (e.g. a fixation or mask screen) becomes the baseline.
 
-**Separate baseline epoch.** If your baseline is recorded as a separate epoch
-(for example, a fixation or mask screen), concatenate it with the stimulus epoch.
-The baseline samples must carry negative times.
+**Separate baseline epoch.** If your baseline is recorded as a separate epoch,
+keep it in the same file: with `onset_epoch` its samples get negative times
+automatically; otherwise give them negative times yourself.
+
+**Example with real data.** `config_mci_dataset.yaml` runs the pipeline on the
+anonymized dataset of the article (see the main README). It shows a typical
+eye-tracker export: absolute timestamps in µs, epoch labels, Tobii validity
+codes and per-eye gaze.
 
 ## Configuration
 

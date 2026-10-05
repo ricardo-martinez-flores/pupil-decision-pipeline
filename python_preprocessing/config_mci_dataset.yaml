@@ -1,0 +1,79 @@
+# =====================================================================
+# Configuration to run pupil_pipeline.py on the anonymized dataset that
+# accompanies the article (older adults with MCI, Tobii 5L, 33 Hz).
+# Download raw_samples_anonymized.csv.gz from Zenodo (see the main README)
+# into python_preprocessing/data/ and run:
+#   python pupil_pipeline.py --config config_mci_dataset.yaml
+# Parameters not listed here use the defaults of config.yaml / the script.
+# =====================================================================
+
+input_csv: data/raw_samples_anonymized.csv.gz
+output_dir: outputs_mci_dataset
+
+columns:
+  participant: participant
+  trial: trial
+  condition: stimulus
+  time: timestamp                  # tracker timestamp (microseconds)
+  epoch: epoch                     # mask_baseline / show_word
+  left_pupil: leftEyePupilSize
+  right_pupil: rightEyePupilSize
+  left_valid: leftEyeValidity
+  right_valid: rightEyeValidity
+  gaze_x: null                     # per-eye gaze is averaged instead
+  gaze_y: null
+  left_gaze_x: leftEyeRawX
+  left_gaze_y: leftEyeRawY
+  right_gaze_x: rightEyeRawX
+  right_gaze_y: rightEyeRawY
+
+validity:
+  valid_values: [0]                # Tobii: 0 = valid
+
+conditions:
+  of_interest: Target
+  reference: Distractor
+
+recording:
+  sampling_rate_hz: 33
+  time_unit_to_ms: 0.001           # microseconds -> ms
+  onset_epoch: show_word           # stimulus onset = first sample of this epoch
+  baseline_window_ms: 215          # last 7 samples of the mask (~212 ms at 33 Hz)
+  response_window_ms: 2000
+
+screen:
+  width_cm: 34.0
+  height_cm: 19.0
+  viewing_distance_cm: 50.0
+
+pupil_range:
+  min_mm: 1.5
+  max_mm: 8.0
+  literature_min_mm: 2.0
+
+coverage:
+  min_valid_pct: 50
+
+interocular:
+  ratio_threshold: 0.30
+
+gap:
+  max_gap_ms: 500
+
+interpolation:
+  method: linear
+
+baseline:
+  summary: mean
+  z_threshold: 2.0
+  mad_threshold: 2.5
+
+smoothing:
+  method: gaussian
+  params: {sigma: 2}
+
+analysis:
+  sensitivity_window_ms: [1000, 1500]
+  n_bootstrap: 5000
+  n_permutations: 5000
+  seed: 12345

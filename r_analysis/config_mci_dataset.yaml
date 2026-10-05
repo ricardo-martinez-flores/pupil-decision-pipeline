@@ -1,0 +1,38 @@
+# =====================================================================
+# Configuration to run pupil_analysis.R on the preprocessed trials of the
+# anonymized dataset that accompanies the article.
+# Download preprocessed_accepted_trials.csv.gz from Zenodo (see the main
+# README) into r_analysis/data/ and run:
+#   Rscript pupil_analysis.R config_mci_dataset.yaml
+# Alternatively, point input_csv / trial_qc_csv to the outputs of
+# pupil_pipeline.py run with config_mci_dataset.yaml.
+# =====================================================================
+
+input_csv: data/preprocessed_accepted_trials.csv.gz
+trial_qc_csv: null               # not included in the dataset; PART 0 is skipped
+output_dir: outputs_mci_dataset
+
+columns:
+  participant: participant
+  trial: trial
+  condition: stimulus
+  time: timestamp_ms
+  pupil: pupil_bc
+
+conditions:
+  of_interest: Target
+  reference: Distractor
+
+lmm:
+  fixed_time_effect: false       # model as specified in the article
+
+features:
+  initial_window_ms: [0, 500]
+  late_window_ms: [1000, .inf]
+
+resampling:
+  n_permutations: 5000
+  n_bootstrap: 5000
+  n_calibration_datasets: 100
+  n_calibration_permutations: 199
+  seed: 12345

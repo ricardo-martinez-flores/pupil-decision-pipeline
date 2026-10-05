@@ -73,6 +73,13 @@ cd ../r_analysis
 Rscript pupil_analysis.R config_analysis.yaml
 ```
 
+**On the article's data.** `config_mci_dataset.yaml` runs the analysis on
+`preprocessed_accepted_trials.csv.gz` from the anonymized dataset of the
+article (https://doi.org/10.5281/zenodo.23160276). It maps that file's column names
+(`stimulus`, `timestamp_ms`) and skips PART 0, because the dataset does not
+include the trial-level quality file; running `pupil_pipeline.py` with
+`config_mci_dataset.yaml` first produces it.
+
 ## Input
 
 **Main input (`input_csv`).** One row per sample of each accepted trial:

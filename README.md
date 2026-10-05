@@ -36,12 +36,14 @@ conditions by editing a configuration file.
 ├── python_preprocessing/     # STEP A -- preprocessing (Python)
 │   ├── pupil_pipeline.py     #   decision-by-decision preprocessing pipeline
 │   ├── config.yaml           #   all parameters and candidate values
+│   ├── config_mci_dataset.yaml  # settings for the article's dataset (see below)
 │   ├── make_example_data.py  #   generates a simulated example dataset
 │   ├── requirements.txt
 │   └── README.md
 ├── r_analysis/               # STEP B -- statistical analysis (R)
 │   ├── pupil_analysis.R      #   GAMM, time-series LMM, features, resampling
 │   ├── config_analysis.yaml
+│   ├── config_mci_dataset.yaml  # settings for the article's dataset
 │   └── README.md
 ├── CITATION.cff
 ├── LICENSE
@@ -118,6 +120,30 @@ Rscript pupil_analysis.R config_analysis.yaml
 The example dataset is **simulated**. It exists only to show the expected input
 format and to test the code; its results have no scientific meaning.
 
+## Testing the pipeline on our data
+
+The anonymized data analysed in the article (67 older adults with MCI, visual
+oddball task, Tobii 5L at 33 Hz) are openly available at
+https://doi.org/10.5281/zenodo.23160276. You can run the pipeline on them to see how each
+decision behaves on real data from a hard-to-measure population, or to compare
+them with your own data:
+
+```bash
+# preprocessing: raw samples, all trials
+cd python_preprocessing
+# place raw_samples_anonymized.csv.gz in python_preprocessing/data/
+python pupil_pipeline.py --config config_mci_dataset.yaml
+
+# statistics: preprocessed accepted trials
+cd ../r_analysis
+# place preprocessed_accepted_trials.csv.gz in r_analysis/data/
+Rscript pupil_analysis.R config_mci_dataset.yaml
+```
+
+The two configuration files only map the dataset's column names and recording
+settings; the code is the same generic pipeline. The results are therefore close
+to, but not necessarily identical with, the values reported in the article.
+
 ## Using your own data
 
 1. Export your recording as a long-format CSV with one row per sample. It needs
@@ -148,8 +174,10 @@ script prints a projected run time before every long loop.
 
 ## Data availability
 
-The data analysed in the manuscript belong to Braingaze SL and are not publicly
-available. This repository contains only code and a simulated example dataset.
+The anonymized data analysed in the article are openly available at
+https://doi.org/10.5281/zenodo.23160276 (CC BY 4.0). They contain no demographic, clinical,
+neuropsychological or biomarker variables and no cohort or site identifiers.
+The data are deposited on Zenodo, not in this repository.
 
 ## Citation
 
